@@ -38,6 +38,10 @@ def _positive(value):
     return result if math.isfinite(result) and result > 0 else None
 
 
+# Slope assigned when no valid TDX slope is found within max_hops (1 cm per km).
+FLAT_SLOPE_FLOOR = 1.0e-5
+
+
 class TDXSlopeResolver:
     """Read a bounded part of the original TDX network and resolve slopes."""
 
@@ -134,9 +138,11 @@ class TDXSlopeResolver:
             if donor is None:
                 donor, hops, method = self._find_downstream(rid)
             if donor is None:
-                raise ValueError(f'No valid original TDX slope upstream/downstream '
-                                 f'within {self.max_hops} reaches for parent LINKNO {rid}')
-            replacement = self.cache[donor]['slope']
+                # No valid slope within max_hops (e.g. long flat/lake stretches): use a flat floor.
+                replacement = FLAT_SLOPE_FLOOR
+                method = 'flat_default_no_donor'
+            else:
+                replacement = self.cache[donor]['slope']
             resolved[rid] = replacement
             substitutions.append({
                 'parent_tdx_reach_id': rid,
