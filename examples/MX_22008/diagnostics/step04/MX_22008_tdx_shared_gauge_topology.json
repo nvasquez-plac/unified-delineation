@@ -1,0 +1,19 @@
+{
+  "site_id": "MX_22008",
+  "tdx_id": "7020000010",
+  "outlet_parent_tdx_reach_id": "249412",
+  "outlet_orientation": "downstream_to_upstream",
+  "outlet_fraction_from_line_start": 0.484794409009,
+  "outlet_registry_record_found": true,
+  "registry_path": "/project/6079554/share/camels-mx/users/nvasquez/unified-delineation/indexes/gauge_catalogs/tdx_shared_network/tdx_gauge_reach_registry.csv",
+  "same_region_assigned_gauge_count": 1,
+  "relationship_counts": {},
+  "related_gauge_count": 0,
+  "related_gauges_needing_review": [],
+  "relationships": [],
+  "shared_relationships_analyzed": true,
+  "split_reaches_generated": false,
+  "fractional_ids_finalized": false,
+  "final_export_authorized": false,
+  "note": "Upstream/downstream relationships are candidate metadata only. Geometry/HRU cuts are not performed in Step 04."
+}

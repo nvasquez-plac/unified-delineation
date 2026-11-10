@@ -1,0 +1,115 @@
+{
+  "site_id": "MX_22008",
+  "outlet_reach_id": 249412,
+  "preflight": {
+    "site_id": "MX_22008",
+    "status": "REVIEW",
+    "preview_only": true,
+    "production_export_authorized": false,
+    "blocked_reasons": [],
+    "review_flags": [
+      "STEP03_REVIEW_REQUIRED"
+    ],
+    "step05_qa_status": "PROVISIONAL",
+    "step05_area_difference_pct": null,
+    "shared_related_gauge_count": 0,
+    "split_plan_file": "/project/6079554/share/camels-mx/users/nvasquez/unified-delineation/indexes/gauge_catalogs/tdx_shared_network/nested_split_plans/7020000010_nested_split_parents.csv",
+    "split_parents_in_upstream_network": [],
+    "native_HRU_count": 555,
+    "refined_HRU_count": 555,
+    "native_reach_count": 555
+  },
+  "preview_only": true,
+  "production_export_authorized": false,
+  "outlet_gauge_lon": -95.935694241,
+  "outlet_gauge_lat": 16.647194648,
+  "outlet_river_clipped": true,
+  "original_outlet_length_m": 3403.189,
+  "exported_outlet_length_m": 1753.342,
+  "gauge_to_reach_distance_m": 0.0,
+  "outlet_geometry_orientation": "downstream_to_upstream",
+  "id_policy": "All HRU_ID, GRU_ID, COMID, hru_to_seg retain original TDX reach IDs; no fractional/new IDs",
+  "slope_provenance": {
+    "source_file": "/project/6079554/share/camels-mx/data/data_copied_hpc/TDX_hydrofabrics/7020000010-streamnet.gpkg",
+    "source_layer": "TDX_streamnet_7020000010_01",
+    "original_id_field": "LINKNO",
+    "original_slope_field": "Slope",
+    "original_downstream_field": "DSLINKNO",
+    "upstream_branch_priority_field": "USContArea",
+    "slope_policy": "original_parent_then_upstream_then_downstream",
+    "max_network_hops": 20,
+    "missing_or_nonpositive_parent_slopes": []
+  },
+  "slope_substitutions": [],
+  "slope_substitutions_csv": null,
+  "exports": {
+    "tdx_native": {
+      "variant": "tdx_native",
+      "site_id": "MX_22008",
+      "original_TDX_ID_preserved": true,
+      "outlet_reach_id": 249412,
+      "outlet_reach_clipped": true,
+      "native_polygon_preserved": true,
+      "refined_polygon_source": null,
+      "HRU_count": 555,
+      "reach_count": 555,
+      "watershed_area_km2": 4674.416054,
+      "river_basins_are_per_reach": true,
+      "preview_only": true,
+      "production_export_authorized": false,
+      "qa_status": "REVIEW",
+      "review_flags": [
+        "STEP03_REVIEW_REQUIRED"
+      ],
+      "files": {
+        "catchment": "/project/6079554/share/camels-mx/users/nvasquez/unified-delineation/outputs/MX_22008/cwarhm_exports/tdx_native/shapefiles/catchment/MX_22008_catchment.shp",
+        "river_basins": "/project/6079554/share/camels-mx/users/nvasquez/unified-delineation/outputs/MX_22008/cwarhm_exports/tdx_native/shapefiles/river_basins/MX_22008_river_basins.shp",
+        "river_network": "/project/6079554/share/camels-mx/users/nvasquez/unified-delineation/outputs/MX_22008/cwarhm_exports/tdx_native/shapefiles/river_network/MX_22008_river_network.shp"
+      },
+      "spatial_diagnostics_file": "/project/6079554/share/camels-mx/users/nvasquez/unified-delineation/outputs/MX_22008/cwarhm_exports/tdx_native/metadata/river_hru_spatial_diagnostics.csv",
+      "min_river_length_fraction_in_own_HRU": 0.779194,
+      "max_upstream_junction_gap_m": 0,
+      "notes": [
+        "Native HRU boundaries are preserved.",
+        "The outlet river is truncated at the gauge in both variants.",
+        "PREVIEW ONLY: no basin has final production export authorization at this stage.",
+        "Original source GeoPackages are not modified.",
+        "Clipping flags and original sizes are in clipping_provenance.csv."
+      ]
+    },
+    "tdx_clipped": {
+      "variant": "tdx_clipped",
+      "site_id": "MX_22008",
+      "original_TDX_ID_preserved": true,
+      "outlet_reach_id": 249412,
+      "outlet_reach_clipped": true,
+      "native_polygon_preserved": false,
+      "refined_polygon_source": "Copernicus GLO-30 conditioned DEM D8",
+      "HRU_count": 555,
+      "reach_count": 555,
+      "watershed_area_km2": 4671.386943,
+      "river_basins_are_per_reach": true,
+      "preview_only": true,
+      "production_export_authorized": false,
+      "qa_status": "REVIEW",
+      "review_flags": [
+        "STEP03_REVIEW_REQUIRED"
+      ],
+      "files": {
+        "catchment": "/project/6079554/share/camels-mx/users/nvasquez/unified-delineation/outputs/MX_22008/cwarhm_exports/tdx_clipped/shapefiles/catchment/MX_22008_catchment.shp",
+        "river_basins": "/project/6079554/share/camels-mx/users/nvasquez/unified-delineation/outputs/MX_22008/cwarhm_exports/tdx_clipped/shapefiles/river_basins/MX_22008_river_basins.shp",
+        "river_network": "/project/6079554/share/camels-mx/users/nvasquez/unified-delineation/outputs/MX_22008/cwarhm_exports/tdx_clipped/shapefiles/river_network/MX_22008_river_network.shp"
+      },
+      "spatial_diagnostics_file": "/project/6079554/share/camels-mx/users/nvasquez/unified-delineation/outputs/MX_22008/cwarhm_exports/tdx_clipped/metadata/river_hru_spatial_diagnostics.csv",
+      "min_river_length_fraction_in_own_HRU": 0.779194,
+      "max_upstream_junction_gap_m": 0,
+      "notes": [
+        "HRU boundaries are clipped to Copernicus D8.",
+        "The outlet river is truncated at the gauge in both variants.",
+        "PREVIEW ONLY: no basin has final production export authorization at this stage.",
+        "Original source GeoPackages are not modified.",
+        "Clipping flags and original sizes are in clipping_provenance.csv."
+      ]
+    }
+  }
+}
