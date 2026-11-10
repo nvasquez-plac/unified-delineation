@@ -4,7 +4,14 @@
 
 The currently implemented and batch-tested workflow uses **TDX-Hydro** river networks and catchment polygons. It supports one gauge or a catalogue of gauges, including candidate gauge-to-river snapping, upstream-network tracing, nested/shared-reach analysis, per-basin CWARHM-style GIS exports, structural validation, and a combined ArcGIS review dataset.
 
-> **Research / QA status:** Outputs are preliminary. A completed Slurm job, successful GIS export, or structural validation pass does **not** establish that a gauge location or watershed is hydrologically correct or approved for CWARHM/SUMMA production. Review status and any uncertainties must be preserved.
+> **Credit:** the delineation workflow and scripts in this repository are **Wouter Knoben's** (CAMELS-SPAT / CWARHM). This copy (branch `camels-mx`, forked from [Armanhd/unified-delineation](https://github.com/Armanhd/unified-delineation)) adds some fixes, the gauge list of 21 CAMELS-MX test basins, a Fir job script to run Wouter's workflow, and an example with its outputs (`examples/MX_22008/`); the hydrological method itself is unchanged. If you use these scripts or outputs, please cite:
+>
+> - Knoben, W. J. M., Thébault, C., Keshavarz, K., Torres-Rojas, L., Chaney, N. W., Pietroniro, A., and Clark, M. P. (2025). Catchment Attributes and MEteorology for Large-Sample SPATially distributed analysis (CAMELS-SPAT): streamflow observations, forcing data and geospatial data for hydrologic studies across North America. *Hydrology and Earth System Sciences*, 29, 5791–5833. <https://doi.org/10.5194/hess-29-5791-2025>
+> - Knoben, W. J. M., Clark, M. P., Bales, J., Bennett, A., Gharari, S., Marsh, C. B., Nijssen, B., Pietroniro, A., Spiteri, R. J., Tang, G., Tarboton, D. G., and Wood, A. W. (2022). Community workflows to advance reproducibility in hydrologic modeling: Separating model-agnostic and model-specific configuration steps in applications of large-domain hydrologic models. *Water Resources Research*, 58(11), e2021WR031753. <https://doi.org/10.1029/2021WR031753>
+>
+> CAMELS-SPAT code: <https://github.com/CH-Earth/camels_spat> · data: <https://dx.doi.org/10.20383/103.01216>
+
+> **Research / QA status:** Outputs are preliminary. A completed Slurm job, successful GIS export, or structural validation pass does **not** establish that a gauge location or watershed is hydrologically correct or approved for CWARHM/SUMMA production. Review status and any uncertainties must be preserved. **Please note you should corroborate that the basin delineation is correct**. 
 
 ## What the workflow does
 
@@ -36,15 +43,21 @@ unified-delineation/
 │   ├── tdx/                          # TDX-Hydro stages and ArcGIS review
 │   ├── merit/                        # Space for additional methods
 │   └── dem/                          # Space for DEM-based workflows
+├── jobSubmission/
+│   └── delineate_one_basin_fir.sh   # Fir: one basin, all steps, dem_refined
+├── sites/
+│   └── sites.csv                    # 21 CAMELS-MX test basins
+├── examples/
+│   └── MX_22008/                    # Complete example outputs of the Fir job (MX_22008)
 ├── environments/
 │   ├── setup_conda_env.sh
 │   ├── load_module_env.sh
 │   └── unified_delineation.yml
 └── docs/
-    └── TDX_Hydro_Delineation_Manual.md
+    └── Manual_TDX_Delineation.md
 ```
 
-The `docs/` manual is a separate, detailed operating guide. The `merit/` and `dem/` paths do not necessarily contain complete, tested implementations. Generated inputs, temporary indexes, model-ready files, and batch outputs live outside version control.
+The `docs/` manual is a separate, detailed operating guide. The `merit/` and `dem/` paths do not necessarily contain complete, tested implementations. Generated inputs, temporary indexes, model-ready files, and batch outputs live outside version control; the only exception is the example in `examples/MX_22008/`.
 
 ## Inputs and prerequisites
 
@@ -69,9 +82,101 @@ conda activate unified_delineation
 
 These absolute ARC paths and module names are installation-specific; other users must configure their own repository, TDX data, and environment locations.
 
+## Quick start on Fir (Alliance): delineate one basin
+
+The job below runs **Wouter's delineation scripts** unchanged (all steps from `1_delineation/`); `jobSubmission/delineate_one_basin_fir.sh` only chains them together with Fir paths.
+
+On Fir everything is already installed in the `rrg-mclark` project space, so each person only needs their own clone. The Python environment, TDX-Hydro and the Copernicus GLO-30 DEM are shared and only read by the job:
+
+| Shared input | Fir path |
+|---|---|
+| Python environment | `/project/6079554/share/camels-mx/envs/unified_delineation` |
+| TDX-Hydro (all of Mexico: regions 7020000010, 7020047840) | `/project/6079554/share/camels-mx/data/data_copied_hpc/TDX_hydrofabrics` |
+| Copernicus GLO-30 DEM | `/project/6079554/share/camels-mx/data/data_copied_hpc/copernicus/glo-30` |
+| Gauges (21 CAMELS-MX **test basins**) | `sites/sites.csv` in this repository |
+
+**1. Clone (first time)**
+
+```bash
+mkdir -p /project/6079554/share/camels-mx/users/$USER
+cd /project/6079554/share/camels-mx/users/$USER
+git clone -b camels-mx https://github.com/nvasquez-plac/unified-delineation.git
+```
+
+Or, if you already have a clone, update it:
+
+```bash
+cd /project/6079554/share/camels-mx/users/$USER/unified-delineation
+git checkout camels-mx
+git pull
+```
+
+**2. Submit the job**
+
+```bash
+cd /project/6079554/share/camels-mx/users/$USER/unified-delineation/jobSubmission
+sbatch delineate_one_basin_fir.sh
+```
+
+`jobSubmission/delineate_one_basin_fir.sh` runs the whole workflow for one basin (steps 01, 00, 02b, 02e, 02f, 03a, 02, 04 index, 04b, 03, 04, 05, 06, 07) with the DEM-refined outlet (`--method dem_refined`). MX_22008 takes about 6 minutes with 8 CPUs. Each block in the script is commented with the files it writes.
+
+**3. Follow the job**
+
+```bash
+squeue -u $USER
+tail -F delineation_delin_one_basin_<jobid>.out    # <jobid> is the number printed by sbatch
+```
+
+The log ends with the step 07 summary (`checks_pass`, `overall_status`) and a `DONE` line.
+
+**4. Results** (inside your clone)
+
+| What | Where |
+|---|---|
+| Basin shapefiles to use (HRUs clipped to the DEM) | `outputs/MX_22008/cwarhm_exports/tdx_clipped/shapefiles/` (`catchment/`, `river_basins/`, `river_network/`) |
+| Same, with plain TDX HRUs | `outputs/MX_22008/cwarhm_exports/tdx_native/shapefiles/` |
+| Validation summary and maps | `outputs/MX_22008/validation/` (`step07_validation_summary.json`, `*.jpg`) |
+| Control file used | `0_control_files/tdx_one_basin/control_MX_22008.toml` |
+
+**5. Another basin**
+
+Change the line near the top of `jobSubmission/delineate_one_basin_fir.sh`:
+
+```bash
+basinId=MX_26282
+```
+
+and submit again. The 21 gauges in `sites/sites.csv` are **test basins** used to check the workflow, not the final CAMELS-MX station list. Any `site_id` there works, except the nested basins MX_12428, MX_12496 and MX_12532, which need the nested steps (05b/06b/07b).
+
+Status `REVIEW` is expected: there is no observed drainage area for CAMELS-MX, so the outlet is chosen automatically and should be checked in a GIS.
+
+**6. Example with outputs**
+
+The repository now includes the complete outputs of one run of `jobSubmission/delineate_one_basin_fir.sh` for **MX_22008** (Boquilla Número 1) in `examples/MX_22008/`. Use it to see what the job produces before running it, or to compare with your own `outputs/MX_22008/` (they should match).
+
+| Result | Value |
+|---|---|
+| Method | `dem_refined` (Copernicus GLO-30) |
+| DEM-refined basin area (`tdx_clipped`) | 4,671.4 km² |
+| Native TDX basin area (`tdx_native`) | 4,674.4 km² |
+| HRUs / river reaches | 555 / 555 |
+| Validation | both variants pass; DEM coverage by HRUs 100 %; status `REVIEW` |
+
+| In `examples/MX_22008/` | Content | Step |
+|---|---|---|
+| `diagnostics/` (`step02/`, `step04/`, `step05/`, `*.json`, `*.jpg`) | Region choice, outlet candidates, upstream trace, DEM outlet refinement, preview maps | 02–05 |
+| `tdx_upstream_native.gpkg` | Upstream TDX sub-basins and reaches | 04 |
+| `tdx_upstream_refined.gpkg` | Same, with the outlet sub-basin redrawn from the DEM | 05 |
+| `cwarhm_exports/tdx_clipped/shapefiles/` | **Final shapefiles to use**: `catchment/`, `river_basins/` (HRUs), `river_network/` | 06 |
+| `cwarhm_exports/tdx_native/shapefiles/` | Same, with plain TDX HRUs | 06 |
+| `cwarhm_exports/*/metadata/` | Export metadata and river/HRU diagnostics | 06 |
+| `validation/` | `step07_validation_summary.json`, `validation_map.jpg`, `native_vs_clipped_comparison.jpg` | 07 |
+
+Paths written inside the JSON files point to the Fir run (`/project/6079554/...`); the files themselves are complete. Your own runs go to `outputs/` (ignored by git), so they never overwrite the example.
+
 ## Running a TDX-Hydro batch: overview
 
-The **[TDX-Hydro delineation manual](docs/TDX_Hydro_Delineation_Manual.md)** contains the complete commands, retry/reconciliation code, validation checks, and Slurm guidance. In brief:
+The **[TDX-Hydro delineation manual](docs/Manual_TDX_Delineation.md)** contains the complete commands, retry/reconciliation code, validation checks, and Slurm guidance. In brief:
 
 1. Validate the station catalogue and index the TDX source data.
 2. Snap stations to candidate river reaches at 500 m; optionally retry only failed sites at 2,000 m, preserving the first pass and the selected search radius.
@@ -241,4 +346,4 @@ The code is intended to support additional delineation methods under `1_delineat
 
 Generated datasets are intentionally excluded from Git. Keep raw TDX source files, station observations, geospatial outputs, and Slurm logs outside version control. Include example inputs and licensing information before a public release; do not redistribute TDX data unless its terms permit it.
 
-For detailed, reproducible commands, use **[`docs/TDX_Hydro_Delineation_Manual.md`](docs/TDX_Hydro_Delineation_Manual.md)**.
+For detailed, reproducible commands, use **[`docs/Manual_TDX_Delineation.md`](docs/Manual_TDX_Delineation.md)**.
