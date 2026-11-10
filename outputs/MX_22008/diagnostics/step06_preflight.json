@@ -1,0 +1,18 @@
+{
+  "site_id": "MX_22008",
+  "status": "REVIEW",
+  "preview_only": true,
+  "production_export_authorized": false,
+  "blocked_reasons": [],
+  "review_flags": [
+    "STEP03_REVIEW_REQUIRED"
+  ],
+  "step05_qa_status": "PROVISIONAL",
+  "step05_area_difference_pct": null,
+  "shared_related_gauge_count": 0,
+  "split_plan_file": "/project/6079554/share/camels-mx/users/nvasquez/unified-delineation/indexes/gauge_catalogs/tdx_shared_network/nested_split_plans/7020000010_nested_split_parents.csv",
+  "split_parents_in_upstream_network": [],
+  "native_HRU_count": 555,
+  "refined_HRU_count": 555,
+  "native_reach_count": 555
+}

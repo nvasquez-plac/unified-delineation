@@ -3,7 +3,6 @@
 # ============================================================
 
 # Generated watershed and batch results
-outputs/
 batch_tdx/
 indexes/
 slurm_logs/
@@ -57,3 +56,9 @@ venv/
 /run_05b_nested_pilot_array.sbatch
 jobSubmission/.fuse_hidden0000000c00000001
 jobSubmission/.fuse_hidden0000003700000001
+
+# Keep the worked example (shapefiles and GeoPackages included)
+!examples/**
+!jobSubmission/logs/
+jobSubmission/logs/*
+!jobSubmission/logs/.gitkeep

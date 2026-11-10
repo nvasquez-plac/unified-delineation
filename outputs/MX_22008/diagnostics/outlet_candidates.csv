@@ -1,0 +1,2 @@
+rank,reach_id,distance_m,snapped_lon,snapped_lat,stream_order,upstream_area_raw,downstream_area_raw,upstream_area_km2,downstream_area_km2,orientation,orientation_evidence,area_estimate_km2,area_difference_pct,along_reach_m,reach_length_m,selected
+1,249412,0.854,-95.935694241,16.647194648,5.0,4415221248.0,4420283904.0,4415.221248,4420.283904,downstream_to_upstream,Verified against downstream reach geometry,4417.8295566764655,,1649.847,3403.189,True
