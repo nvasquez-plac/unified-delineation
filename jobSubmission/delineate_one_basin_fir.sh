@@ -9,7 +9,7 @@
 #==================================================================================
 # Delineate one CAMELS-MX basin on Fir (dem_refined), in your own clone.
 # Run from your clone's jobSubmission folder:  sbatch delineate_one_basin_fir.sh
-# Results: outputs/$USER/$basinId/ in your clone.
+# Results: outputs/$basinId/ in your clone.
 #==================================================================================
 set -eo pipefail
 
@@ -32,7 +32,7 @@ umask 002
 ROOT=$(dirname $SLURM_SUBMIT_DIR)        # clone top folder (one above jobSubmission)
 TDX=/project/6079554/share/camels-mx/data/data_copied_hpc/TDX_hydrofabrics
 DEM=/project/6079554/share/camels-mx/data/data_copied_hpc/copernicus/glo-30
-OUT=$ROOT/outputs/$USER
+OUT=$ROOT/outputs
 CTRL=$ROOT/0_control_files/tdx_one_basin
 C=$CTRL/control_$basinId.toml
 T=1_delineation/tdx
@@ -103,7 +103,7 @@ sed -i 's/^observed_area_km2 = .*/observed_area_km2 = 0/' $C
 #==================================================================================
 # Region preparation (once per TDX region)
 # 02  pick the TDX region that contains the gauge
-#     Output: outputs/$USER/$basinId/diagnostics/tdx_region_selection.json
+#     Output: outputs/$basinId/diagnostics/tdx_region_selection.json
 # 04  build the region's river topology index (who flows into whom), reused by step 04
 #     Output: indexes/tdx_regional_topology/<region>_topology.sqlite
 # 04b plan splits where another gauge sits inside this basin (none for a single gauge)
@@ -116,7 +116,7 @@ python $T/04_trace_tdx_upstream.py --control $C --build-topology-index --index-o
 python $T/04b_plan_shared_nested_splits.py --region $R
 
 #==================================================================================
-# Basin steps, all written to outputs/$USER/$basinId/
+# Basin steps, all written to outputs/$basinId/
 # 03 outlet: choose the TDX reach/sub-basin at the gauge
 #    Output: tdx_outlet_selection.json, diagnostics/step03/outlet_candidates.csv
 # 04 upstream: trace every TDX sub-basin draining to the outlet (native TDX basin)
@@ -125,10 +125,10 @@ python $T/04b_plan_shared_nested_splits.py --region $R
 #    exactly at the gauge (dem_refined)
 #    Output: tdx_upstream_refined.gpkg, tdx_refinement_summary.json, diagnostics/step05/*.tif
 # 06 export: shapefiles for SUMMA/mizuRoute (catchment, HRUs, river network)
-#    Output: cwarhm_exports/tdx_clipped/shapefiles/
-#            ${basinId}_catchment.shp, ${basinId}_river_basins.shp, ${basinId}_river_network.shp
+#    Output: cwarhm_exports/tdx_clipped/shapefiles/ (folders catchment/, river_basins/, river_network/)
+#            tdx_clipped = HRUs clipped to the Copernicus DEM (use this); tdx_native = plain TDX
 # 07 validate: checks geometry/topology, makes maps
-#    Output: validation/step07_validation_summary.json + PNG figures
+#    Output: validation/step07_validation_summary.json + maps (validation_map.jpg, native_vs_clipped_comparison.jpg)
 #==================================================================================
 python $T/03_select_tdx_outlet.py --control $C --allow-review
 python $T/04_trace_tdx_upstream.py --control $C --require-topology-index --require-shared-registry
