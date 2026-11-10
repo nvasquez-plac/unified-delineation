@@ -17,10 +17,16 @@ set -eo pipefail
 basinId=MX_22008
 
 #==================================================================================
-# Environment
+# Environment: built on the node's local disk ($SLURM_TMPDIR) to keep IOPS off /project
+# (~10 s). Packages: Alliance wheelhouse + pysheds/geojson wheels in envs/wheels.
+# pyproj is removed so the proj module's pyproj 3.6.1 (matching PROJ 9.2.0) is used.
 #==================================================================================
 module load StdEnv/2023 gcc/12.3 python/3.11 gdal/3.7.2
-source /project/6079554/share/camels-mx/envs/unified_delineation/bin/activate
+ENVS=/project/6079554/share/camels-mx/envs
+virtualenv --no-download $SLURM_TMPDIR/env
+source $SLURM_TMPDIR/env/bin/activate
+pip install -q --no-index --find-links $ENVS/wheels -r $ENVS/requirements_unified_delineation.txt
+pip uninstall -q -y pyproj
 export PYTHONNOUSERSITE=1
 export EBPYTHONPREFIXES=$(echo "$EBPYTHONPREFIXES" | tr ':' '\n' | grep -v '/hdf5/' | paste -sd:)
 export NUMBA_CACHE_DIR=$SLURM_TMPDIR/numba
