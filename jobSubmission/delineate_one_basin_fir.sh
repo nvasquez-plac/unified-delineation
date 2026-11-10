@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=3800M
 #SBATCH --time=02:00:00
-#SBATCH --output=delineation_%x_%j.out
+#SBATCH --output=logs/delineation_%x_%j.out
 
 #==================================================================================
 # Delineate one CAMELS-MX basin on Fir (dem_refined), in your own clone.
