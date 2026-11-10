@@ -42,20 +42,30 @@ echo "== $basinId  output: $OUT/$basinId"
 
 #==================================================================================
 # Gauge: take basin $basinId from sites/sites.csv (Estacion,site_id,longitude,latitude)
+# Output: sites/sites_one.csv -> one row: site_id,latitude,longitude
 #==================================================================================
 echo "site_id,latitude,longitude" > sites/sites_one.csv
 grep "\"$basinId\"" sites/sites.csv | tr -d '"' | awk -F, '{print $2","$4","$3}' >> sites/sites_one.csv
 cat sites/sites_one.csv
 
 #==================================================================================
-# 01 index TDX regions, 00 validate gauge
+# 01 index TDX regions: lists every TDX-Hydro region (basins + streamnet gpkg) and its extent
+#    Output: indexes/tdx_regions.csv, indexes/tdx_local_health.csv (files found / readable)
+# 00 validate gauge: checks ID, coordinates, duplicates
+#    Output: indexes/gauge_catalogs/sites_one_validated.csv (+ _summary.json)
 #==================================================================================
 python $T/01_build_tdx_index.py --tdx-dir $TDX --index-dir indexes
 python 1_delineation/common/00_prepare_gauge_catalog.py --catalog sites/sites_one.csv
 CAT=indexes/gauge_catalogs/sites_one_validated.csv
 
 #==================================================================================
-# 02b snap gauge to TDX reach, 02e consolidate, 02f reach registry
+# 02b snap gauge to the nearest TDX river reach (within 500 m)
+#     Output: indexes/gauge_catalogs/tdx_snapping/batch_500m/
+#             tdx_gauge_snaps_*.csv (chosen reach), tdx_snap_candidates_*.csv, tdx_snap_summary_*.json
+# 02e consolidate the snap batches into one table and check them (PASS/FAIL)
+#     Output: .../tdx_snapping/global_500m/tdx_gauge_snaps_all.csv, tdx_global_summary.json
+# 02f reach registry: which gauges share a reach / sit upstream of each other
+#     Output: indexes/gauge_catalogs/tdx_shared_network/tdx_gauge_reach_registry.csv (+ summary)
 #==================================================================================
 python $T/02b_snap_gauge_catalog.py --catalog $CAT --region-index indexes/tdx_regions.csv \
   --tdx-root $TDX --output-dir indexes/gauge_catalogs/tdx_snapping/batch_500m \
@@ -70,12 +80,16 @@ python $T/02f_build_shared_reach_registry.py --catalog $CAT --snaps $SNAPS
 
 #==================================================================================
 # 03a control file: Fir paths in the template, dem_refined, no observed area
+#     Output: 0_control_files/template_one_basin.toml (template with Fir paths)
+#             0_control_files/tdx_one_basin/control_$basinId.toml (settings for this basin,
+#             read by every step below)
 #==================================================================================
 cp 0_control_files/control_USGS_10343500.toml 0_control_files/template_one_basin.toml
 sed -i -e "s#^tdx_directory = .*#tdx_directory = \"$TDX\"#" \
        -e "s#^dem_directory = \"/work.*#dem_directory = \"$DEM\"#" \
        -e "s#^output_directory = .*#output_directory = \"$OUT\"#" \
        0_control_files/template_one_basin.toml
+       
 # 03a needs an expected area: give 1 km2 now, set it to 0 afterwards
 python -c "import pandas as p; d=p.read_csv('$CAT'); d['expected_area_km2']=1; d.to_csv('indexes/gauge_catalogs/sites_one_area.csv', index=False)"
 python 1_delineation/common/03a_generate_batch_controls.py \
@@ -87,7 +101,13 @@ python 1_delineation/common/03a_generate_batch_controls.py \
 sed -i 's/^observed_area_km2 = .*/observed_area_km2 = 0/' $C
 
 #==================================================================================
-# Region: 02 region file, 04 topology index, 04b nested plan
+# Region preparation (once per TDX region)
+# 02  pick the TDX region that contains the gauge
+#     Output: outputs/$USER/$basinId/diagnostics/tdx_region_selection.json
+# 04  build the region's river topology index (who flows into whom), reused by step 04
+#     Output: indexes/tdx_regional_topology/<region>_topology.sqlite
+# 04b plan splits where another gauge sits inside this basin (none for a single gauge)
+#     Output: indexes/gauge_catalogs/tdx_shared_network/nested_split_plans/
 #==================================================================================
 R=$(python -c "import tomllib; print(tomllib.load(open('$C','rb'))['input']['tdx_id'])")
 mkdir -p $OUT/$basinId/diagnostics
@@ -96,7 +116,19 @@ python $T/04_trace_tdx_upstream.py --control $C --build-topology-index --index-o
 python $T/04b_plan_shared_nested_splits.py --region $R
 
 #==================================================================================
-# Basin: 03 outlet, 04 upstream, 05 DEM refine, 06 export, 07 validate
+# Basin steps, all written to outputs/$USER/$basinId/
+# 03 outlet: choose the TDX reach/sub-basin at the gauge
+#    Output: tdx_outlet_selection.json, diagnostics/step03/outlet_candidates.csv
+# 04 upstream: trace every TDX sub-basin draining to the outlet (native TDX basin)
+#    Output: tdx_upstream_native.gpkg, tdx_upstream_summary.json
+# 05 DEM refine: re-draw the outlet sub-basin from the Copernicus DEM so the basin ends
+#    exactly at the gauge (dem_refined)
+#    Output: tdx_upstream_refined.gpkg, tdx_refinement_summary.json, diagnostics/step05/*.tif
+# 06 export: shapefiles for SUMMA/mizuRoute (catchment, HRUs, river network)
+#    Output: cwarhm_exports/tdx_clipped/shapefiles/
+#            ${basinId}_catchment.shp, ${basinId}_river_basins.shp, ${basinId}_river_network.shp
+# 07 validate: checks geometry/topology, makes maps
+#    Output: validation/step07_validation_summary.json + PNG figures
 #==================================================================================
 python $T/03_select_tdx_outlet.py --control $C --allow-review
 python $T/04_trace_tdx_upstream.py --control $C --require-topology-index --require-shared-registry
