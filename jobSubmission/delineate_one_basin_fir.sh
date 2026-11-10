@@ -60,6 +60,11 @@ CAT=indexes/gauge_catalogs/sites_one_validated.csv
 python $T/02b_snap_gauge_catalog.py --catalog $CAT --region-index indexes/tdx_regions.csv \
   --tdx-root $TDX --output-dir indexes/gauge_catalogs/tdx_snapping/batch_500m \
   --start 0 --stop 1 --radius-m 500 --area-units m2
+# 02b names a whole-catalogue run "_all"; 02e looks for "_0000_0001"
+cd indexes/gauge_catalogs/tdx_snapping/batch_500m
+for f in tdx_gauge_snaps tdx_snap_candidates; do mv ${f}_all.csv ${f}_0000_0001.csv; done
+mv tdx_snap_summary_all.json tdx_snap_summary_0000_0001.json
+cd $ROOT
 python $T/02e_consolidate_gauge_snaps.py --catalog $CAT
 python $T/02f_build_shared_reach_registry.py --catalog $CAT --snaps $SNAPS
 
