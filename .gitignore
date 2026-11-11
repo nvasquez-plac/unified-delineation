@@ -5,6 +5,7 @@
 # Generated watershed and batch results
 outputs/
 sites/sites_one.csv
+sites/v01_sites.csv
 0_control_files/template_one_basin.toml
 batch_tdx/
 indexes/
