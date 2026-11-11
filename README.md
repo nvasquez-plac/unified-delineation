@@ -44,9 +44,14 @@ unified-delineation/
 │   ├── merit/                        # Space for additional methods
 │   └── dem/                          # Space for DEM-based workflows
 ├── jobSubmission/
-│   └── delineate_one_basin_fir.sh   # Fir: one basin, all steps, dem_refined
+│   ├── delineate_one_basin_fir.sh   # Fir: one basin, all steps, dem_refined
+│   ├── v01_1_prepare.sh             # Fir: all stations, shared preparation (sbatch)
+│   ├── v01_2_submit.sh              # Fir: all stations, submit per-basin job arrays (bash)
+│   ├── v01_basin_task.sh            # Fir: one basin per array task (used by v01_2_submit.sh)
+│   └── logs/                        # Slurm logs (not tracked)
 ├── sites/
-│   └── sites.csv                    # 21 CAMELS-MX test basins
+│   ├── sites.csv                    # 21 CAMELS-MX test basins
+│   └── HS_verified_v09.txt          # Full CAMELS-MX station list for v01 (basinId|X|Y)
 ├── examples/
 │   └── MX_22008/                    # Complete example outputs of the Fir job (MX_22008)
 ├── environments/
@@ -86,11 +91,11 @@ These absolute ARC paths and module names are installation-specific; other users
 
 The job below runs **Wouter's delineation scripts** unchanged (all steps from `1_delineation/`); `jobSubmission/delineate_one_basin_fir.sh` only chains them together with Fir paths.
 
-On Fir everything is already installed in the `rrg-mclark` project space, so each person only needs their own clone. The Python environment, TDX-Hydro and the Copernicus GLO-30 DEM are shared and only read by the job:
+On Fir everything is already installed in the `rrg-mclark` project space, so each person only needs their own clone. The Python package list, TDX-Hydro and the Copernicus GLO-30 DEM are shared and only read by the job:
 
 | Shared input | Fir path |
 |---|---|
-| Python environment | `/project/6079554/share/camels-mx/envs/unified_delineation` |
+| Python environment | built by each job in `$SLURM_TMPDIR` from `/project/6079554/share/camels-mx/envs/requirements_unified_delineation.txt` + `envs/wheels/` (modules `StdEnv/2023 gcc/12.3 python/3.11 gdal/3.7.2`) |
 | TDX-Hydro (all of Mexico: regions 7020000010, 7020047840) | `/project/6079554/share/camels-mx/data/data_copied_hpc/TDX_hydrofabrics` |
 | Copernicus GLO-30 DEM | `/project/6079554/share/camels-mx/data/data_copied_hpc/copernicus/glo-30` |
 | Gauges (21 CAMELS-MX **test basins**) | `sites/sites.csv` in this repository |
@@ -173,6 +178,57 @@ The repository now includes the complete outputs of one run of `jobSubmission/de
 | `validation/` | `step07_validation_summary.json`, `validation_map.jpg`, `native_vs_clipped_comparison.jpg` | 07 |
 
 Paths written inside the JSON files point to the Fir run (`/project/6079554/...`); the files themselves are complete. Your own runs go to `outputs/` (ignored by git), so they never overwrite the example.
+
+## Delineating all stations on Fir (v01 batch)
+
+To delineate the full CAMELS-MX station list (`sites/HS_verified_v09.txt`, ~870 stations) instead of one basin, use the three `v01_*` scripts in `jobSubmission/`. They run the same Wouter Knoben workflow steps as the single-basin job (dem_refined outlet, no observed area), but share the preparation across all stations and run one Slurm task per basin.
+
+| Item | Location |
+|---|---|
+| Station list (`basinId\|X\|Y`, X = longitude, Y = latitude) | `sites/HS_verified_v09.txt` |
+| All results | `/project/6079554/share/camels-mx/data/basin_delineation/v01/` |
+| Control files (one per basin) | `v01/controls/control_<basinId>.toml` |
+| Basin lists used by the job arrays | `v01/lists/` (`basins_normal.txt`, `basins_large.txt`, `not_snapped.txt`, `regions.txt`) |
+| Basin outputs | `v01/<basinId>/` (same layout as `examples/MX_22008/`) |
+| Logs | `jobSubmission/logs/v01_*.out` in the clone used to submit |
+
+**Step 1: shared preparation (one job, a few hours)**
+
+```bash
+cd /project/6079554/share/camels-mx/users/$USER/unified-delineation
+git pull
+cd jobSubmission
+sbatch v01_1_prepare.sh
+tail -F logs/v01_prepare_<jobid>.out
+```
+
+`v01_1_prepare.sh` converts the station list to `sites/v01_sites.csv`, then runs 01 (TDX index), 00 (validation), 02b (snapping within 500 m, in blocks of 20), 02e, 02f, 03a (controls, `dem_refined`, `dem_max_cells = 400000000`) and the per-region steps 02, 04 (topology index), 04b and 04c. If a `basinId` appears twice in the station list, the **last** row is kept and the duplicates are printed at the top of the log. The job ends with `v01 prepare DONE`.
+
+**Step 2: submit every basin (login node, after step 1 finished)**
+
+```bash
+cd /project/6079554/share/camels-mx/users/$USER/unified-delineation/jobSubmission
+bash v01_2_submit.sh
+```
+
+This submits four job arrays that run `v01_basin_task.sh`, one task per basin:
+
+| Array | Steps | Resources |
+|---|---|---|
+| `v01_dem_normal` | 02, 03, 04, 05 (DEM refinement) | 8 CPUs, ~30 GB, 3 h |
+| `v01_dem_large` (TDX upstream area ≥ 20,000 km²) | 02, 03, 04, 05 | 32 CPUs, ~120 GB, 12 h |
+| `v01_export_normal` | 06 + 07, or 05b + 06b + 07b if another station is inside the basin (nested) | 8 CPUs, 3 h |
+| `v01_export_large` | same, for large basins | 32 CPUs, 12 h |
+
+The export arrays start only after **all** DEM tasks have ended, because a nested basin needs the step-05 results of the stations upstream of it.
+
+**Notes**
+
+- Run the v01 batch from one clone only, and do not run the single-basin job in that same clone at the same time: both write the shared station indexes in the clone's `indexes/` folder, which the nested exports read.
+- Stations with no TDX reach within 500 m are listed in `v01/lists/not_snapped.txt` and are not delineated.
+- Every job builds its Python environment on the node's local disk (`$SLURM_TMPDIR`, ~10 s) from `envs/requirements_unified_delineation.txt` and `envs/wheels/`, so Python imports do not load `/project`.
+- If a job fails within seconds with `Transport endpoint is not connected` for `/cvmfs`, the compute node lost its software mount. Resubmit (optionally with `--exclude=<node>`, node from `sacct -j <jobid> -X --format=NodeList`) and report the node to Alliance support.
+- If `virtualenv` fails with `no .dist-info ... ~/.local/share/virtualenv`, an old cache in your home folder is broken: `rm -rf ~/.local/share/virtualenv` (the current scripts no longer use that cache).
 
 ## Running a TDX-Hydro batch: overview
 
