@@ -3,7 +3,7 @@
 #SBATCH --job-name=v01_prepare
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=3800M
-#SBATCH --time=08:00:00
+#SBATCH --time=01:00:00
 #SBATCH --output=logs/v01_prepare_%j.out
 
 #==================================================================================
