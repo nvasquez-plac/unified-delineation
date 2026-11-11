@@ -23,7 +23,7 @@ basinId=MX_22008
 #==================================================================================
 module load StdEnv/2023 gcc/12.3 python/3.11 gdal/3.7.2
 ENVS=/project/6079554/share/camels-mx/envs
-virtualenv --no-download $SLURM_TMPDIR/env
+virtualenv --no-download --app-data $SLURM_TMPDIR/venv-cache $SLURM_TMPDIR/env
 source $SLURM_TMPDIR/env/bin/activate
 pip install -q --no-index --find-links $ENVS/wheels -r $ENVS/requirements_unified_delineation.txt
 pip uninstall -q -y pyproj
