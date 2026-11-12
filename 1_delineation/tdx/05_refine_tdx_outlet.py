@@ -236,12 +236,16 @@ def dem_boundary(directory, native, snapped, site, observed, settings, diag, opt
             if not crs.is_geographic:
                 raise ValueError('Missing-tile ocean fill expects geographic Copernicus tiles')
             # Cell-centre coordinates; cells inside a missing tile are ocean.
+            # Copernicus pixel centres fall exactly on whole degrees (half-pixel
+            # shifted tiles), so include both tile edges with a half-cell margin.
+            # Only cells still NaN are changed (ocean &= invalid below).
             xs = affine.c + (np.arange(filled.shape[1]) + 0.5) * affine.a
             ys = affine.f + (np.arange(filled.shape[0]) + 0.5) * affine.e
+            hx, hy = abs(affine.a) / 2, abs(affine.e) / 2
             ocean = np.zeros(filled.shape, dtype=bool)
             for lat, lon, _ in missing_tiles:
-                rows = (ys >= lat) & (ys < lat + 1)
-                cols = (xs >= lon) & (xs < lon + 1)
+                rows = (ys > lat - hy) & (ys < lat + 1 + hy)
+                cols = (xs > lon - hx) & (xs < lon + 1 + hx)
                 ocean |= np.outer(rows, cols)
             ocean &= invalid
             filled[ocean] = 0.0
