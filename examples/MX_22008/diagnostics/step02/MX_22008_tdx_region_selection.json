@@ -1,9 +1,0 @@
-{
-  "tdx_id": "7020000010",
-  "basins_file": "/project/6079554/share/camels-mx/data/data_copied_hpc/TDX_hydrofabrics/7020000010-basins.gpkg",
-  "streamnet_file": "/project/6079554/share/camels-mx/data/data_copied_hpc/TDX_hydrofabrics/7020000010-streamnet.gpkg",
-  "basins_layer": "basins",
-  "streamnet_layer": "TDX_streamnet_7020000010_01",
-  "lat": 16.6472,
-  "lon": -95.9357
-}

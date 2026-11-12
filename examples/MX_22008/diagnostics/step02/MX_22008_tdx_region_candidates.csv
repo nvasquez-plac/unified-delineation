@@ -1,3 +1,0 @@
-tdx_id,status,details,basins_filename,streamnet_filename,features_tested,basins_crs
-7020000010,CONFIRMED,,7020000010-basins.gpkg,7020000010-streamnet.gpkg,1,EPSG:4326
-7020047840,NOT_CONTAINED,,7020047840-basins.gpkg,7020047840-streamnet.gpkg,0,EPSG:4326

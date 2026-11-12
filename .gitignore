@@ -66,3 +66,4 @@ jobSubmission/.fuse_hidden0000003700000001
 !jobSubmission/logs/
 jobSubmission/logs/*
 !jobSubmission/logs/.gitkeep
+/examples
