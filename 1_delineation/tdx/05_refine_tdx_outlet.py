@@ -77,10 +77,15 @@ def tile_paths(source, bounds4326):
             ew = f'E{lon:03d}' if lon >= 0 else f'W{-lon:03d}'
             stem = f'Copernicus_DSM_COG_10_{ns}_00_{ew}_00_DEM'
             f = p / stem / (stem + '.tif')
-            (found if f.is_file() else missing).append(f)
-    if missing:
-        raise FileNotFoundError('Missing Copernicus tiles: ' + '; '.join(str(p) for p in missing[:8]))
-    return found
+            if f.is_file():
+                found.append(f)
+            else:
+                # Copernicus has no tiles over open ocean: keep the tile's
+                # south-west corner so its cells can be set to sea level.
+                missing.append((lat, lon, stem))
+    if not found:
+        raise FileNotFoundError('No Copernicus tiles found for DEM window: ' + '; '.join(m[2] for m in missing[:8]))
+    return found, missing
 
 
 def approximate_cell_area_km2(affine, crs, lon, lat):
@@ -201,7 +206,9 @@ def dem_boundary(directory, native, snapped, site, observed, settings, diag, opt
     from rasterio.warp import transform_bounds
     win = native.to_crs(metric).geometry.union_all().buffer(buffer_m)
     bounds4326 = gpd.GeoSeries([win], crs=metric).to_crs('EPSG:4326').total_bounds
-    tiles = tile_paths(directory, bounds4326)
+    tiles, missing_tiles = tile_paths(directory, bounds4326)
+    if missing_tiles:
+        print(f'Missing Copernicus tiles treated as ocean (0 m): {", ".join(m[2] for m in missing_tiles)}',flush=True)
     with ExitStack() as stack:
         ds = [stack.enter_context(rasterio.open(f)) for f in tiles]
         crs = ds[0].crs
@@ -224,7 +231,25 @@ def dem_boundary(directory, native, snapped, site, observed, settings, diag, opt
             raise RuntimeError(f'DEM window {raw.size:,} cells > dem_max_cells={max_cells:,}; use a smaller local domain / different tiling strategy')
         invalid = np.ma.getmaskarray(raw) | ~np.isfinite(np.asarray(raw.data))
         filled = np.asarray(raw.data, dtype=np.float32)
+        ocean_cells = 0
+        if missing_tiles:
+            if not crs.is_geographic:
+                raise ValueError('Missing-tile ocean fill expects geographic Copernicus tiles')
+            # Cell-centre coordinates; cells inside a missing tile are ocean.
+            xs = affine.c + (np.arange(filled.shape[1]) + 0.5) * affine.a
+            ys = affine.f + (np.arange(filled.shape[0]) + 0.5) * affine.e
+            ocean = np.zeros(filled.shape, dtype=bool)
+            for lat, lon, _ in missing_tiles:
+                rows = (ys >= lat) & (ys < lat + 1)
+                cols = (xs >= lon) & (xs < lon + 1)
+                ocean |= np.outer(rows, cols)
+            ocean &= invalid
+            filled[ocean] = 0.0
+            invalid = invalid & ~ocean
+            ocean_cells = int(ocean.sum())
         filled, void_qc = fill_small_voids(filled, invalid, max_connected_void_cells=max_void_patch)
+        void_qc['dem_missing_tiles_as_ocean'] = [m[2] for m in missing_tiles]
+        void_qc['dem_ocean_cells_set_to_0m'] = ocean_cells
         void_qc['dem_max_connected_void_cells_allowed'] = max_void_patch
         void_qc['dem_large_void_preview_override_used'] = bool(void_qc['max_void_component_cells'] > 1500)
         print(f'Loaded Copernicus DEM window {filled.shape}, interpolated {void_qc["void_cells_filled"]} small voids',flush=True)
