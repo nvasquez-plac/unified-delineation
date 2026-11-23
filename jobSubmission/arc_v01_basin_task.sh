@@ -10,7 +10,7 @@ set -eo pipefail
 PHASE=$1
 LIST=$2
 basinId=$(sed -n "${SLURM_ARRAY_TASK_ID}p" $LIST)
-OUT=/work/comphyd_lab/share/dataset_develop/camels_mx/basin_delineation_v01
+OUT=/work/comphyd_lab/share/dataset_develop/camels_southAmer/basin_delineation/outputs/v1
 
 ENV=/work/comphyd_lab/users/nvasquez/envs/unified_delineation
 export PATH=$ENV/bin:$PATH

@@ -11,7 +11,7 @@
 # Logs: jobSubmission/logs/arc_v01_<phase>_<jobid>_<task>.out
 #==================================================================================
 set -eo pipefail
-LISTS=/work/comphyd_lab/share/dataset_develop/camels_mx/basin_delineation_v01/lists
+LISTS=/work/comphyd_lab/share/dataset_develop/camels_southAmer/basin_delineation/outputs/v1/lists
 NN=$(wc -l < $LISTS/basins_normal.txt)
 NL=$(wc -l < $LISTS/basins_large.txt)
 echo "basins: $NN normal, $NL large"

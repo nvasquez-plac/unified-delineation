@@ -14,8 +14,8 @@
 set -eo pipefail
 
 # Station list (basinId|X|Y, X = longitude, Y = latitude) and output folder
-STATIONS=sites/HS_verified_v09.txt
-OUT=/work/comphyd_lab/share/dataset_develop/camels_mx/basin_delineation_v01
+STATIONS=sites/CAMELS-SPAT-SA-stations_v01.txt
+OUT=/work/comphyd_lab/share/dataset_develop/camels_southAmer/basin_delineation/outputs/v1
 
 #==================================================================================
 # Environment (conda env on /work; put its bin first on PATH, no activation needed)
@@ -29,7 +29,7 @@ umask 002
 # Folders
 #==================================================================================
 ROOT=$(dirname $SLURM_SUBMIT_DIR)        # clone top folder (one above jobSubmission)
-TDX=/work/comphyd_lab/data/geospatial-data/TDX_hydrofabrics/TDX_hydrofabrics
+TDX=/work/comphyd_lab/share/dataset_develop/camels_southAmer/TDX_hydrofabrics_SA
 DEM=/work/comphyd_lab/data/geospatial-data/copernicus/glo-30
 CTRL=$OUT/controls
 LISTS=$OUT/lists
