@@ -29,7 +29,7 @@ umask 002
 # Folders
 #==================================================================================
 ROOT=$(dirname $SLURM_SUBMIT_DIR)        # clone top folder (one above jobSubmission)
-TDX=/work/comphyd_lab/share/dataset_develop/camels_southAmer/TDX_hydrofabrics_SA
+TDX=/work/comphyd_lab/data/geospatial-data/TDX_hydrofabrics/TDX_hydrofabrics
 DEM=/work/comphyd_lab/data/geospatial-data/copernicus/glo-30
 CTRL=$OUT/controls
 LISTS=$OUT/lists
