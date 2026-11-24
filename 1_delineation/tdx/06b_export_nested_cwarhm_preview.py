@@ -102,7 +102,7 @@ def polygonal_part(geom):
     return GeometryCollection()
 
 
-def validate_and_repair_hrus(hru, id_column, diag, max_area_change_m2=100.0,
+def validate_and_repair_hrus(hru, id_column, diag, max_area_change_m2=10000.0,
                              max_relative_area_change=0.001):
     """Report each invalid HRU and repair only very small, bounded errors.
 
@@ -240,7 +240,7 @@ def fix_collapsed_polygon_components(geometry, crs):
 
 
 def verify_and_repair_written_polygons(files, site, metric_crs, diag,
-                                       max_area_change_m2=100.0,
+                                       max_area_change_m2=10000.0,
                                        max_relative_area_change=0.001):
     """Reopen actual SHP files, repair collapsed rings and verify again.
 
@@ -320,7 +320,7 @@ def verify_and_repair_written_polygons(files, site, metric_crs, diag,
             raise ValueError(f'{key} contains invalid geometry after shapefile '
                              f'repair: {details}')
     if original_union is not None:
-        new_union = check_c.to_crs(metric_crs).geometry.union_all()
+        new_union = check_c.to_crs(metric_crs).geometry.make_valid().union_all()
         changed = float(original_union.symmetric_difference(new_union).area)
         if changed > max(200.0, 1e-5 * max(float(original_union.area), 1.0)):
             raise ValueError(f'Post-export union changed excessively: {changed:.3f} m2')

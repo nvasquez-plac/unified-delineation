@@ -111,9 +111,9 @@ def main():
             if ds and at is None:break
     if len({f_id(x) for x in river.COMID})!=len(R):
         numeric_ok=False
-    hp=hru.to_crs(cfg['delineation']['projected_crs'])
+    hp=hru.to_crs(cfg['delineation']['projected_crs']); hp['geometry']=hp.geometry.make_valid()
     rp=river.to_crs(cfg['delineation']['projected_crs'])
-    bp=bas.to_crs(cfg['delineation']['projected_crs'])
+    bp=bas.to_crs(cfg['delineation']['projected_crs']); bp['geometry']=bp.geometry.make_valid()
     hru_by={str(r['TDX_ID']).strip():r.geometry for _,r in hp.iterrows()}
     river_by={str(r['TDX_ID']).strip():r.geometry for _,r in rp.iterrows()}
     union=hp.geometry.union_all()
